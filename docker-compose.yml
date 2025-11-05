@@ -1,10 +1,50 @@
 version: "3.9"
+
 services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: order_service
+    ports:
+      - "5432:5432"
+    networks:
+      - monitoring-net
+
+  test_postgres_exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: test_postgres_exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://test:test@postgres:5432/order_service?sslmode=disable
+    ports:
+      - "9187:9187"
+    networks:
+      - monitoring-net
+
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus
     container_name: prometheus
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
-    restart: always
+    networks:
+      - monitoring-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - monitoring-net
+
+networks:
+  monitoring-net:
+    driver: bridge

@@ -1,0 +1,30 @@
+version: "3.9"
+
+networks:
+  monitoring-net:
+    external: true
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: test_postgres
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: order_service
+    ports:
+      - "5433:5432"
+    networks:
+      - monitoring-net
+
+  postgres_exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    container_name: test_postgres_exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://test:test@postgres:5432/order_service?sslmode=disable"
+    ports:
+      - "9188:9187"
+    depends_on:
+      - postgres
+    networks:
+      - monitoring-net
